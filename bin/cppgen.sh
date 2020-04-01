@@ -408,7 +408,7 @@ echo_green "Created libs/$NAME/libs/"
 
 gen_class () {
 CLASS_NAME=$1
-PROJECT_NAME="$(basename "libs/$NAME")"
+PROJECT_NAME="$(basename "$PWD")"
 shift
 
 ADD_TESTS=false
