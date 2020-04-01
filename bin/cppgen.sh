@@ -311,8 +311,6 @@ mkdir libs
 
 echo_green "created $PROJECT_NAME/libs/"
 
-cd libs
-
 gen_subdir example
 
 }
@@ -320,15 +318,17 @@ gen_subdir example
 gen_subdir(){
 
 NAME=$1
+PROJECT_NAME="$(basename "libs/$NAME")"
 
 if [ "$NAME" == "" ]; then
   echo_red "ERROR subdir Name is required"
 fi
 
+cd libs
 
 mkdir $NAME
 
-echo_green "Created $PWD/$NAME/"
+echo_green "Created libs/$NAME/"
 
 cd $NAME
 
@@ -348,11 +348,11 @@ add_library($NAME STATIC ./src/$NAME.cpp)
 #target_link_libraries($NAME PUBLIC | PRIVATE | INTERFACE LIBRARY_NAME)
 EOF
 
-echo_green "Created $PWD/CMakeLists.txt"
+echo_green "Created libs/$NAME/CMakeLists.txt"
 
 mkdir include
 
-echo_green "Created $PWD/include/"
+echo_green "Created libs/$NAME/include/"
 
 cd include
 
@@ -378,7 +378,7 @@ cd ../../
 
 mkdir src
 
-echo_green "Created $PWD/src/"
+echo_green "Created libs/$NAME/src/"
 
 cd src
 
@@ -398,17 +398,17 @@ cd ../
 
 mkdir docs
 
-echo_green "Created $PWD/docs/"
+echo_green "Created libs/$NAME/docs/"
 
 mkdir libs
 
-echo_green "Created $PWD/libs/"
+echo_green "Created libs/$NAME/libs/"
 
 }
 
 gen_class () {
 CLASS_NAME=$1
-PROJECT_NAME="$(basename "$PWD")"
+PROJECT_NAME="$(basename "libs/$NAME")"
 shift
 
 ADD_TESTS=false
