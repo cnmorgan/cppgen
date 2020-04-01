@@ -60,6 +60,10 @@ Use this directory for any third party libraries you want to use in your project
 
 Use this directory for the actual source code of your project along with any private header files
 
+### /tests
+
+Use this directory to house your tests. The script defaults to using catch2
+
 ## TODO
 
 in the  directory execute the following commands:
