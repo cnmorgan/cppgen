@@ -208,6 +208,10 @@ EOC
 
 echo_green "created $PROJECT_NAME/include/$PROJECT_NAME/example.hpp"
 
+mkdir templates
+
+echo_green "created $PROJECT_NAME/include/$PROJECT_NAME/templates"
+
 cd ../../
 
 mkdir src
@@ -224,9 +228,13 @@ void Example::foo(){
 };
 EOF
 
-cd ../
-
 echo_green "created $PROJECT_NAME/src/example.cpp"
+
+mkdir headers
+
+echo_green "created $PROJECT_NAME/src/headers/"
+
+cd ../
 
 mkdir app
 
