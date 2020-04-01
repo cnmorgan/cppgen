@@ -52,15 +52,22 @@ touch CMakeLists.txt
 cat << EOF >> CMakeLists.txt
 cmake_minimum_required(VERSION 3.1)
 
+include(CTest)
+
 #-----------------#
 # CMake Variables #
 #-----------------#
 
-set(TARGET_NAME helloworld)
+set(TARGET_NAME $PROJECT_NAME)
 
 # Add all src/*.cpp files
 set(SOURCES
     src/example.cpp
+)
+
+# Add all tests/*.cpp files
+set(TEST_SOURCES
+    tests/main.cpp
 )
 EOF
 
@@ -68,16 +75,24 @@ cat << 'EOF' >> CMakeLists.txt
 
 project(${TARGET_NAME} VERSION 1.0.0 LANGUAGES CXX)
 
-# include files
-# TODO: Add 3rd party includes here e.g. ./libs/LIB_NAME/include
-include_directories(./include ./libs/example/include)
-
 # Create Library
 add_library(${TARGET_NAME} ${SOURCES})
 
-# Create Executable
+# include files
+# TODO: Add 3rd party includes here e.g. ./libs/LIB_NAME/include
+target_include_directories(${TARGET_NAME} ./include ./libs/example/include)
+
+# Create Executable (if applicatble)
 add_executable(main app/main.cpp)
 target_link_libraries(main PRIVATE ${TARGET_NAME})
+
+# Create executable for tests (Catch2 by default)
+add_executable(tests ${TEST_SOURCES})
+
+target_include_directories(tests PRIVATE ./include)
+
+add_test(NAME tests COMMAND tests)
+enable_testing()
 
 # external libraries
 # TODO: Add library references when needed
@@ -155,6 +170,10 @@ Use this directory for any third party libraries you want to use in your project
 ### /src
 
 Use this directory for the actual source code of your project along with any private header files
+
+### /tests
+
+Use this directory to house your tests. The script defaults to using catch2
 
 ## TODO
 
@@ -259,6 +278,26 @@ cd ../
 mkdir tests
 
 echo_green "created $PROJECT_NAME/tests/"
+
+cd tests
+
+cat << EOF > main.cpp
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
+
+/* This file is the main testing entrypoint
+ * Do not put tests in this file.
+ * To add new tests, make other *.cpp files in this directory
+ * adding #include<catch2/catch.hpp> to the top as well as
+ * any other needed includes and preprocessor statements.
+ *
+ * finally, add any new files to the CMakeLists.txt file.
+ */
+EOF
+
+echo_green "created $PROJECT_NAME/tests/main.cpp"
+
+cd ../
 
 mkdir examples
 
@@ -369,6 +408,29 @@ echo_green "Created $PWD/libs/"
 
 gen_class () {
 CLASS_NAME=$1
+PROJECT_NAME="$(basename "$PWD")"
+shift
+
+ADD_TESTS=false
+SCOPE='private'
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --test | -t )           
+          ADD_TESTS=true
+          ;;
+        --public | -p )
+          SCOPE='public'
+          ;;
+        --api | -a )
+          SCOPE='api'
+          ;;
+        * )
+          echo_red "ERROR: flag $1 unrecognized"
+          exit 1
+    esac
+    shift
+done
 
 if [ "$CLASS_NAME" == "" ]; then
   echo_red "ERROR: Class name cannot be blank"
@@ -382,16 +444,48 @@ EOC
 
 echo_green "Created src/$CLASS_NAME.cpp"
 
+if [ $SCOPE != "public" ]; then
 cat << EOC > src/headers/$CLASS_NAME.hpp
 #pragma once
 
 class $CLASS_NAME {
-  
+  private:
+    //Code here
+  public:
+    //Code here
 };
 EOC
 
 echo_green "Created src/headers/$CLASS_NAME.hpp"
+fi
 
+if [ $SCOPE != "private" ]; then
+cat << EOC > include/$PROJECT_NAME/$CLASS_NAME.hpp
+#pragma once
+
+class $CLASS_NAME {  
+  private:
+    //Code here
+  public:
+    //Code here
+};
+EOC
+
+echo_green "Created include/$PROJECT_NAME/$CLASS_NAME.hpp"
+fi
+
+if [ "$ADD_TESTS" == true ]; then
+cat << EOC > tests/$CLASS_NAME.cpp
+#include <catch2/catch.hpp>
+
+TEST_CASE("$CLASS_NAME", "[$CLASS_NAME]"){
+  //add tests
+  REQUIRE(1 == 2);
+}
+EOC
+
+echo_green "Created tests/$CLASS_NAME.cpp"
+fi
 }
 
 #-------------#
@@ -403,7 +497,7 @@ echo "command required"
 echo "cppgen"
 echo "       project | p  [project_name]"
 echo "       subdir  | sd [subdir_name]"
-echo "       class   | c  [class_name]"
+echo "       class   | c  [class_name] [Flags]"
 exit 0
 fi
 
@@ -411,17 +505,17 @@ while [ "$1" != "" ]; do
     case $1 in
         project | p )           
           shift
-          gen_project $1
+          gen_project "$@"
           exit 0
           ;;
         subdir | sd )
           shift
-          gen_subdir $1
+          gen_subdir "$@"
           exit 0
           ;;
         class | c )
           shift
-          gen_class $1
+          gen_class "$@"
           exit 0
           ;;
         * )
