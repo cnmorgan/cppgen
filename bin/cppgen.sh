@@ -408,9 +408,9 @@ echo_green "Created libs/$NAME/libs/"
 
 gen_class () {
 CLASS_NAME=$1
-PROJECT_NAME="$(basename "$PWD")"
 shift
 
+PROJECT_NAME="$(basename "$PWD")"
 ADD_TESTS=false
 SCOPE='private'
 
@@ -488,6 +488,70 @@ echo_green "Created tests/$CLASS_NAME.cpp"
 fi
 }
 
+gen_template(){
+TEMPLATE_NAME=$1
+shift
+
+PROJECT_NAME="$(basename "$PWD")"
+ADD_TESTS=false
+
+
+if [ "$TEMPLATE_NAME" == "" ]; then
+  echo_red "ERROR: Template name cannot be blank"
+  exit 1
+fi
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --test | -t )           
+          ADD_TESTS=true
+          ;;
+        * )
+          echo_red "ERROR: flag $1 unrecognized"
+          exit 1
+    esac
+    shift
+done
+
+cat << EOC > include/$PROJECT_NAME/templates/$TEMPLATE_NAME.tcc
+#include <$PROJECT_NAME/$TEMPLATE_NAME.hpp>
+
+//TODO: Add implementation code
+EOC
+
+echo_green "Created include/$PROJECT_NAME/templates/$TEMPLATE_NAME.tcc"
+
+cat << EOC > include/$PROJECT_NAME/$TEMPLATE_NAME.hpp
+#pragma once
+
+template <typename T>
+class $TEMPLATE_NAME{
+  private:
+    //Add private fields
+  public:
+    //Add public fields
+};
+
+#include "templates/$TEMPLATE_NAME.tcc"
+EOC
+
+echo_green "Created include/$PROJECT_NAME/$TEMPLATE_NAME.hpp"
+
+if [ "$ADD_TESTS" == true ]; then
+cat << EOC > tests/$TEMPLATE_NAME.cpp
+#include <catch2/catch.hpp>
+
+TEMPLATE_TEST_CASE("$TEMPLATE_NAME", "[$TEMPLATE_NAME][Template]", int){
+  //add tests
+  REQUIRE(1 == 2);
+}
+EOC
+
+echo_green "Created tests/$TEMPLATE_NAME.cpp"
+fi
+
+}
+
 #-------------#
 # Main script #
 #-------------#
@@ -495,9 +559,10 @@ fi
 if [ $# == 0 ]; then
 echo "command required"
 echo "cppgen"
-echo "       project | p  [project_name]"
-echo "       subdir  | sd [subdir_name]"
-echo "       class   | c  [class_name] [Flags]"
+echo "       project    | p  [project_name]"
+echo "       subdir     | sd [subdir_name]"
+echo "       class      | c  [class_name]    [Flags]"
+echo "       template   | t  [tempalte_name] [Flags]"
 exit 0
 fi
 
@@ -516,6 +581,11 @@ while [ "$1" != "" ]; do
         class | c )
           shift
           gen_class "$@"
+          exit 0
+          ;;
+        template | t )
+          shift
+          gen_template "$@"
           exit 0
           ;;
         * )
