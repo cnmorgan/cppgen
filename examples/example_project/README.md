@@ -16,12 +16,12 @@ example_project
 +--include
 |  +--example_project
 |  |  +--example.hpp
-+--libs
++--lib
 |  +--docs
 |  +--include
 |  |  +--example
 |  |  |  +--example.hpp
-|  +--libs
+|  +--lib
 |  +--src
 |  |  +--example.cpp
 |  +--CMakeLists.txt
@@ -52,7 +52,7 @@ Put example code demonstrating the use of your project here.
 
 Put any public header files in this directory.
 
-### /libs
+### /lib
 
 Use this directory for any third party libraries you want to use in your project
 

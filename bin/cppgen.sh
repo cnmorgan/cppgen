@@ -52,8 +52,6 @@ touch CMakeLists.txt
 cat << EOF >> CMakeLists.txt
 cmake_minimum_required(VERSION 3.1)
 
-include(CTest)
-
 #-----------------#
 # CMake Variables #
 #-----------------#
@@ -75,12 +73,14 @@ cat << 'EOF' >> CMakeLists.txt
 
 project(${TARGET_NAME} VERSION 1.0.0 LANGUAGES CXX)
 
+include(CTest)
+
 # Create Library
 add_library(${TARGET_NAME} ${SOURCES})
 
 # include files
-# TODO: Add 3rd party includes here e.g. ./libs/LIB_NAME/include
-target_include_directories(${TARGET_NAME} ./include ./libs/example/include)
+# TODO: Add 3rd party includes here e.g. ./lib/LIB_NAME/include
+target_include_directories(${TARGET_NAME} PUBLIC ./include PUBLIC ./lib/example/include)
 
 # Create Executable (if applicatble)
 add_executable(main app/main.cpp)
@@ -96,7 +96,7 @@ enable_testing()
 
 # external libraries
 # TODO: Add library references when needed
-add_subdirectory(libs/example)
+add_subdirectory(lib/example)
 target_link_libraries(${TARGET_NAME} PUBLIC example)
 EOF
 
@@ -127,12 +127,12 @@ $PROJECT_NAME
 +--include
 |  +--$PROJECT_NAME
 |  |  +--example.hpp
-+--libs
++--lib
 |  +--docs
 |  +--include
 |  |  +--example
 |  |  |  +--example.hpp
-|  +--libs
+|  +--lib
 |  +--src
 |  |  +--example.cpp
 |  +--CMakeLists.txt
@@ -163,7 +163,7 @@ Put example code demonstrating the use of your project here.
 
 Put any public header files in this directory.
 
-### /libs
+### /lib
 
 Use this directory for any third party libraries you want to use in your project
 
@@ -307,9 +307,9 @@ mkdir docs
 
 echo_green "created $PROJECT_NAME/docs/"
 
-mkdir libs
+mkdir lib
 
-echo_green "created $PROJECT_NAME/libs/"
+echo_green "created $PROJECT_NAME/lib/"
 
 gen_subdir example
 
@@ -318,17 +318,17 @@ gen_subdir example
 gen_subdir(){
 
 NAME=$1
-PROJECT_NAME="$(basename "libs/$NAME")"
+PROJECT_NAME="$(basename "lib/$NAME")"
 
 if [ "$NAME" == "" ]; then
   echo_red "ERROR subdir Name is required"
 fi
 
-cd libs
+cd lib
 
 mkdir $NAME
 
-echo_green "Created libs/$NAME/"
+echo_green "Created lib/$NAME/"
 
 cd $NAME
 
@@ -336,7 +336,7 @@ cat << EOF > CMakeLists.txt
 cmake_minimum_required(VERSION 3.1)
 
 # include files
-# TODO: Add 3rd party includes here e.g. ./libs/LIB_NAME/include
+# TODO: Add 3rd party includes here e.g. ./lib/LIB_NAME/include
 include_directories(./include)
 
 # Create target
@@ -344,15 +344,15 @@ include_directories(./include)
 add_library($NAME STATIC ./src/$NAME.cpp)
 
 # Add any link dependencies
-#add_subdirectory(libs/LIBRARY_NAME)
+#add_subdirectory(lib/LIBRARY_NAME)
 #target_link_libraries($NAME PUBLIC | PRIVATE | INTERFACE LIBRARY_NAME)
 EOF
 
-echo_green "Created libs/$NAME/CMakeLists.txt"
+echo_green "Created lib/$NAME/CMakeLists.txt"
 
 mkdir include
 
-echo_green "Created libs/$NAME/include/"
+echo_green "Created lib/$NAME/include/"
 
 cd include
 
@@ -378,7 +378,7 @@ cd ../../
 
 mkdir src
 
-echo_green "Created libs/$NAME/src/"
+echo_green "Created lib/$NAME/src/"
 
 cd src
 
@@ -398,11 +398,11 @@ cd ../
 
 mkdir docs
 
-echo_green "Created libs/$NAME/docs/"
+echo_green "Created lib/$NAME/docs/"
 
-mkdir libs
+mkdir lib
 
-echo_green "Created libs/$NAME/libs/"
+echo_green "Created lib/$NAME/lib/"
 
 }
 

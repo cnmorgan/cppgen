@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
 
-include(CTest)
-
 #-----------------#
 # CMake Variables #
 #-----------------#
@@ -20,12 +18,14 @@ set(TEST_SOURCES
 
 project(${TARGET_NAME} VERSION 1.0.0 LANGUAGES CXX)
 
+include(CTest)
+
 # Create Library
 add_library(${TARGET_NAME} ${SOURCES})
 
 # include files
-# TODO: Add 3rd party includes here e.g. ./libs/LIB_NAME/include
-target_include_directories(${TARGET_NAME} ./include ./libs/example/include)
+# TODO: Add 3rd party includes here e.g. ./lib/LIB_NAME/include
+target_include_directories(${TARGET_NAME} PUBLIC ./include PUBLIC ./lib/example/include)
 
 # Create Executable (if applicatble)
 add_executable(main app/main.cpp)
@@ -41,5 +41,5 @@ enable_testing()
 
 # external libraries
 # TODO: Add library references when needed
-add_subdirectory(libs/example)
+add_subdirectory(lib/example)
 target_link_libraries(${TARGET_NAME} PUBLIC example)
