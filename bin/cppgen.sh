@@ -26,29 +26,10 @@ echo_yellow () {
 }
 
 #---------------------------#
-# Generate Project Function #
+# File Helper Functions     #
 #---------------------------#
 
-gen_project () {
-
-PROJECT_NAME=$1
-
-if [ "$PROJECT_NAME" == "" ];
-then
-  echo_red "ERROR: project name required"
-  exit 1
-fi
-
-echo "Generating project $PROJECT_NAME..."
-
-mkdir $PROJECT_NAME
-
-echo_green "created $PROJECT_NAME/"
-
-cd $PROJECT_NAME
-
-touch CMakeLists.txt
-
+example_cmake () {
 cat << EOF >> CMakeLists.txt
 cmake_minimum_required(VERSION 3.1)
 
@@ -99,15 +80,59 @@ enable_testing()
 add_subdirectory(lib/example)
 target_link_libraries(${TARGET_NAME} PUBLIC example)
 EOF
+}
 
-echo_green "created $PROJECT_NAME/CMakeLists.txt"
+empty_cmake () {
+cat << EOF >> CMakeLists.txt
+cmake_minimum_required(VERSION 3.1)
 
-touch .gitignore
+#-----------------#
+# CMake Variables #
+#-----------------#
 
-echo "/build" > .gitignore
+set(TARGET_NAME $PROJECT_NAME)
 
-echo_green "created $PROJECT_NAME/.gitignore"
+# Add all src/*.cpp files
+set(SOURCES
+)
 
+# Add all tests/*.cpp files
+set(TEST_SOURCES
+    tests/main.cpp
+)
+EOF
+
+cat << 'EOF' >> CMakeLists.txt 
+
+project(${TARGET_NAME} VERSION 1.0.0 LANGUAGES CXX)
+
+include(CTest)
+
+# Create Library
+add_library(${TARGET_NAME} ${SOURCES})
+
+# include files
+# TODO: Add 3rd party includes here e.g. ./lib/LIB_NAME/include
+target_include_directories(${TARGET_NAME} PUBLIC ./include )
+
+# Create Executable (if applicatble)
+add_executable(main app/main.cpp)
+target_link_libraries(main PRIVATE ${TARGET_NAME})
+
+# Create executable for tests (Catch2 by default)
+add_executable(tests ${TEST_SOURCES})
+
+target_include_directories(tests PRIVATE ./include)
+
+add_test(NAME tests COMMAND tests)
+enable_testing()
+
+# external libraries
+# TODO: Add library references when needed
+EOF
+}
+
+readme () {
 cat << EOF >README.md 
 # $PROJECT_NAME
 
@@ -194,6 +219,81 @@ to change as your project grows and new files and/or modules are added.
 
 After you have made sure you understand the structure of this project, remove all of the sample code and you can begin adding to your project.
 EOF
+}
+
+example_main () {
+cat << EOF > main.cpp
+#include <$PROJECT_NAME/example.hpp>
+#include <example/example.hpp>
+
+int main(){
+  Example::foo();
+  SubExample::foo();
+};
+EOF
+}
+
+empty_main () {
+cat << EOF > main.cpp
+int main(){
+  return 0;
+};
+EOF
+}
+#---------------------------#
+# Generate Project Function #
+#---------------------------#
+
+gen_project () {
+
+PROJECT_NAME=$1
+shift
+
+EXAMPLE="false"
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --example | -e )
+          EXAMPLE="true"
+          ;;
+        * )
+          echo_red "ERROR: flag $1 unrecognized"
+          exit 1
+    esac
+    shift
+done
+
+if [ "$PROJECT_NAME" == "" ];
+then
+  echo_red "ERROR: project name required"
+  exit 1
+fi
+
+echo "Generating project $PROJECT_NAME..."
+
+mkdir $PROJECT_NAME
+
+echo_green "created $PROJECT_NAME/"
+
+cd $PROJECT_NAME
+
+touch CMakeLists.txt
+
+if [ "$EXAMPLE" == "true" ]; then
+  example_cmake
+else
+  empty_cmake
+fi
+
+echo_green "created $PROJECT_NAME/CMakeLists.txt"
+
+touch .gitignore
+
+echo "/build" > .gitignore
+
+echo_green "created $PROJECT_NAME/.gitignore"
+
+readme
 
 echo_green "created $PROJECT_NAME/README.md"
 
@@ -215,6 +315,7 @@ echo_green "created $PROJECT_NAME/include/$PROJECT_NAME/"
 
 cd include/$PROJECT_NAME
 
+if [ "$EXAMPLE" == "true" ]; then
 cat << EOC > example.hpp
 #include<iostream>
 
@@ -226,6 +327,8 @@ class Example{
 EOC
 
 echo_green "created $PROJECT_NAME/include/$PROJECT_NAME/example.hpp"
+
+fi
 
 mkdir templates
 
@@ -239,6 +342,8 @@ echo_green "created $PROJECT_NAME/src/"
 
 cd src
 
+if [ "$EXAMPLE" == "true" ]; then
+
 cat << EOF > example.cpp
 #include <$PROJECT_NAME/example.hpp>
 
@@ -248,6 +353,8 @@ void Example::foo(){
 EOF
 
 echo_green "created $PROJECT_NAME/src/example.cpp"
+
+fi
 
 mkdir headers
 
@@ -261,15 +368,11 @@ echo_green "created $PROJECT_NAME/app/"
 
 cd app
 
-cat << EOF > main.cpp
-#include <$PROJECT_NAME/example.hpp>
-#include <example/example.hpp>
-
-int main(){
-  Example::foo();
-  SubExample::foo();
-};
-EOF
+if [ "$EXAMPLE" == "true" ]; then
+  example_main
+else
+  empty_main
+fi
 
 echo_green "created $PROJECT_NAME/app/main.cpp"
 
@@ -311,8 +414,9 @@ mkdir lib
 
 echo_green "created $PROJECT_NAME/lib/"
 
+if [ "$EXAMPLE" == "true" ]; then
 gen_subdir example
-
+fi
 }
 
 gen_subdir(){
